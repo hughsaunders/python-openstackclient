@@ -39,9 +39,8 @@ class CreateVolume(show.ShowOne):
             help='Name of the volume',
         )
         parser.add_argument(
-            '--size',
+            'size',
             metavar='<size>',
-            required=True,
             type=int,
             help='New volume size',
         )
