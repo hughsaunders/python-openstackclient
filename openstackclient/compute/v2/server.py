@@ -1556,22 +1556,25 @@ class SshServer(command.Command):
             metavar='<server>',
             help=_('Server (name or ID)'),
         )
+        # Deprecated December 2016
         parser.add_argument(
             '--login',
             metavar='<login-name>',
-            help=_('Login name (ssh -l option)'),
+            help=argparse.SUPPRESS,
         )
+        # Deprecated December 2016
         parser.add_argument(
             '-l',
             dest='login',
             metavar='<login-name>',
             help=argparse.SUPPRESS,
         )
+        # Deprecated December 2016
         parser.add_argument(
             '--port',
             metavar='<port>',
             type=int,
-            help=_('Destination port (ssh -p option)'),
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
             '-p',
@@ -1580,10 +1583,11 @@ class SshServer(command.Command):
             type=int,
             help=argparse.SUPPRESS,
         )
+        # Deprecated December 2016
         parser.add_argument(
             '--identity',
             metavar='<keyfile>',
-            help=_('Private key file (ssh -i option)'),
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
             '-i',
@@ -1591,10 +1595,11 @@ class SshServer(command.Command):
             dest='identity',
             help=argparse.SUPPRESS,
         )
+        # Deprecated December 2016
         parser.add_argument(
             '--option',
             metavar='<config-options>',
-            help=_('Options in ssh_config(5) format (ssh -o option)'),
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
             '-o',
@@ -1648,6 +1653,13 @@ class SshServer(command.Command):
             default=False,
             help=argparse.SUPPRESS,
         )
+        parser.add_argument(
+            'ssh_args',
+            nargs='*',
+            metavar='-- <standard ssh args>',
+            help=('Any argument or option that ssh allows. '
+                  'Use -- once between openstackclient args and SSH args.')
+        )
         return parser
 
     def take_action(self, parsed_args):
@@ -1658,36 +1670,38 @@ class SshServer(command.Command):
             parsed_args.server,
         )
 
-        # Build the command
-        cmd = "ssh"
-
         ip_address_family = [4, 6]
         if parsed_args.ipv4:
             ip_address_family = [4]
-            cmd += " -4"
         if parsed_args.ipv6:
             ip_address_family = [6]
-            cmd += " -6"
 
+        ssh_args = " ".join(parsed_args.ssh_args)
+        deprecated_args = []
         if parsed_args.port:
-            cmd += " -p %d" % parsed_args.port
+            deprecated_args.append("-p %d" % parsed_args.port)
         if parsed_args.identity:
-            cmd += " -i %s" % parsed_args.identity
+            deprecated_args.append("-i %s" % parsed_args.identity)
         if parsed_args.option:
-            cmd += " -o %s" % parsed_args.option
-        if parsed_args.login:
-            login = parsed_args.login
-        else:
-            login = self.app.client_manager.auth_ref.username
+            deprecated_args.append("-o %s" % parsed_args.option)
+        if "-l" not in ssh_args:
+            if parsed_args.login:
+                login = parsed_args.login
+            else:
+                login = self.app.client_manager.auth_ref.username
+            deprecated_args.append("-l %s" % login)
         if parsed_args.verbose:
-            cmd += " -v"
+            deprecated_args.append(" -v")
 
-        cmd += " %s@%s"
         ip_address = _get_ip_address(server.addresses,
                                      parsed_args.address_type,
                                      ip_address_family)
-        LOG.debug("ssh command: %s", (cmd % (login, ip_address)))
-        os.system(cmd % (login, ip_address))
+        cmd = "ssh {ip} {dep_args} {args}".format(
+            ip=ip_address,
+            dep_args=" ".join(deprecated_args),
+            args=ssh_args)
+        LOG.debug("ssh command: {cmd}".format(cmd=cmd))
+        os.system(cmd)
 
 
 class StartServer(command.Command):

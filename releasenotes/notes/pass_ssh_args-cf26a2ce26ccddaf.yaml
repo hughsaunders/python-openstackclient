@@ -1,0 +1,12 @@
+---
+features:
+  - When using ``openstack server ssh`` pass arguments through to the
+    ssh command. This allows the user to use any ssh option without having
+    to add that option to openstack client. Existing openstackclient options
+    that mirror SSH options are deprecated.
+
+deprecations:
+  - Openstackclient options that mirror ssh
+    options are deprecated (``--login, -l, --port, --identity,``
+    ``--option, -o, -vz``). The ssh equivalent of each deprecated option can
+    be used instead. For example ``openstack server ssh instance -- -l user -i key``

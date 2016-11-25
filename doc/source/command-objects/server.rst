@@ -706,12 +706,11 @@ SSH to server
 .. program:: server ssh
 .. code:: bash
 
-    os server ssh
-        [--login <login-name>]
-        [--port <port>]
-        [--identity <keyfile>]
-        [--option <config-options>]
-        [--public | --private | --address-type <address-type>]
+    os server ssh 
+      [-h] [-4 | -6]
+      [--public | --private | --address-type <address-type>]
+      <server>
+      [-- <standard ssh args> [<standard ssh args> ...]]
         <server>
 
 .. option:: --login <login-name>
